@@ -1,10 +1,16 @@
+from datetime import datetime, timezone
 import os
+from pathlib import Path
 import boto3
 from botocore.client import Config
 from dotenv import load_dotenv
 
+from config.config import MyConfig
+
 
 load_dotenv()
+
+CONFIG_PATH = Path("./config.yml")
 
 def main():
     access_key_id = os.getenv("ACCESS_KEY_ID")
@@ -18,7 +24,8 @@ def main():
         config=Config(signature_version="s3v4")
     )
 
-
+    config_data = MyConfig(path=CONFIG_PATH)
+    today = datetime.now(timezone.utc).today()
 
 
 if __name__ == "__main__":

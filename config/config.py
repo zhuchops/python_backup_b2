@@ -4,13 +4,19 @@ import yaml
 from pathlib import Path
 
 
-class Config:
+class MyConfig:
     path: Path
 
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    def read(self) -> ConfigData:
+    def _check_dir(self, path: Path) -> bool:
+        if path.exists():
+            if path.is_dir():
+                return True
+        return False
+
+    def read(self) -> MyConfigData:
         try:
             with open(self.path) as f:
                 config = yaml.safe_load(f)
@@ -19,7 +25,7 @@ class Config:
 
         dirs = list()
         if "dirs" in config:
-            dirs.extend(config["dirs"])
+            dirs.extend(filter(lambda x: self._check_dir(x), config["dirs"]))
         else:
             raise NoRequiredFieldFound("dirs")
 
@@ -29,11 +35,12 @@ class Config:
         else:
             raise NoRequiredFieldFound("death_delay")
 
-        return ConfigData(dirs, 0)
+        return MyConfigData(dirs, 0)
+
 
 
 @dataclass
-class ConfigData:
+class MyConfigData:
     dirs: list[Path]
     death_delay: int
 
@@ -56,4 +63,14 @@ class NoRequiredFieldFound(ParsingError):
     def __init__(self, field: str) -> None:
         self.field = field
         self.e = f"No required field {field} found"
+        super().__init__(self.e)
+
+
+class WrongDirectoryPath(ParsingError):
+    e: str
+    path: Path
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.e = f"Can not locate directory on {self.path}"
         super().__init__(self.e)
